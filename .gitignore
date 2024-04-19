@@ -1,0 +1,6 @@
+#virtual env
+.venv
+
+#temporary test files
+test.*
+temp.*

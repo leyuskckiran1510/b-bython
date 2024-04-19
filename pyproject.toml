@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bython"
+version = "0.0.1"
+dependencies = []
+requires-python = ">=3.7"
+authors = [{ name = "Leyuskc", email = "leyuskc@gmail.com" }]
+description = "Bython without regex"
+readme = "README.md"
+keywords = ["bython", "better python"]
+classifiers = ["Programming Language :: Python :: 3"]
+
+[project.urls]
+Homepage = "https://github.com/leyuskckiran1510/bython"
+Issues = "https://github.com/leyuskckiran1510/bython/issues"
+
+[tool.setuptools.package-dir]
+bython = "src"
+
+[tool.isort]
+line_length = 79
+force_single_line = true
+
+[tool.black]
+line-length = 79
+preview = true
+
+[tool.pyright]
+include = ["src", "test.py", "temp.py"]
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
