@@ -1,3 +1,4 @@
+import re
 import sys
 from uuid import uuid4
 
@@ -20,7 +21,11 @@ INDENT_ABLES = [
     "case",
 ]
 
-INDENT_WITH = " "
+MAGIC_WORDS = {
+    r"else[\s]+if": "elif",
+}
+
+INDENT_WITH = "    "
 
 # Normal Symbol stack
 SYMBOLS = ["{", "}", "(", ")", "[", "]"]
@@ -133,7 +138,7 @@ def remove_tailing_close_braces(inner_chunk: str) -> str:
             continue
         else:
             break
-    return inner_chunk[:code_len]
+    return inner_chunk[:code_len] + "\n"
 
 
 def count_space(line: str):
@@ -255,6 +260,12 @@ def tokenizer(raw_code: str, level: int = 0) -> str:
     return new_code + cur_word
 
 
+def replace_magic_words(code: str):
+    for _from, to in MAGIC_WORDS.items():
+        code = re.sub(_from, to, code)
+    return code
+
+
 def test_all(upto: int = 5):
     for i in range(1, upto + 1):
         sample_index = i
@@ -277,6 +288,7 @@ if __name__ == "__main__":
         print("Tokonized into... ")
         sample = "\n".join([i.strip() for i in sample.split("\n")])
         python_code = tokenizer(sample)
+        python_code = replace_magic_words(python_code)
         with open("output.py", "w") as fp:
             fp.write(python_code)
         exec(python_code)
