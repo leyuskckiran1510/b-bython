@@ -1,3 +1,3 @@
 DIR = src
 run:
-	@ python -u $(DIR)/main.py
+	@ python -u $(DIR)/main.py $(index)

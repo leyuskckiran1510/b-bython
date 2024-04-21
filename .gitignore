@@ -7,3 +7,6 @@ __pycache__
 #temporary test files
 test.*
 temp.*
+
+# oupitfiles
+output.py
