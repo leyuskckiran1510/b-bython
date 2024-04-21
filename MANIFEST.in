@@ -1,3 +1,1 @@
 include README.md
-graft league_bot/assets
-prune league_bot/assets/screenshots
