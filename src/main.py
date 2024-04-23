@@ -57,7 +57,7 @@ def do_fstring(code: str, index: int) -> int:
 def handel_quote(code: str, index: int) -> int:
     """
     It handels the thirple and single quotes,
-
+    and f-strings
     """
     code_len = len(code)
     next_three = code[index : index + 3]
@@ -75,7 +75,7 @@ def handel_quote(code: str, index: int) -> int:
             index = do_fstring(code, index)
         else:
             index += 1
-            while code[index] != quote:
+            while index < code_len and code[index] != quote:
                 index += 1
             index += 1
     return index
@@ -131,7 +131,7 @@ def do_open_braces(code: str, pointer: int) -> tuple[str, int]:
     return line + ":\n", pointer - 1
 
 
-def clearn_inner_chunk(inner_chunk: str) -> str:
+def remove_tailing_closing_brace(inner_chunk: str) -> str:
     code_len = len(inner_chunk)
     while code_len > 0:
         code_len -= 1
@@ -188,7 +188,7 @@ def handle_solo_code_block(
 def do_inner_chunk(code: str, pointer: int, level: int = 0) -> tuple[str, int]:
     """
     it extracts out the code block ie:- code inside outermost '{' and '}',
-    then treats the code block as a new code and runs tokenizer on it
+    then treats the code block as a new code and runs complier on it
     then indents the tokenized output
     """
     symbol_stack = [code[pointer]]
@@ -214,10 +214,9 @@ def do_inner_chunk(code: str, pointer: int, level: int = 0) -> tuple[str, int]:
         # consume tailing white spaces also
         while pointer < len(code) and code[pointer] in WHITESPACES:
             pointer += 1
-        print(pointer, code[pointer:].__repr__())
 
-    inner_chunk = clearn_inner_chunk(inner_chunk)
-    inner_chunk = tokenizer(inner_chunk, level=level)
+    inner_chunk = remove_tailing_closing_brace(inner_chunk)
+    inner_chunk = complier(inner_chunk, level=level)
     inner_chunk = indent_it(inner_chunk, level)
     return inner_chunk, pointer
 
@@ -237,11 +236,13 @@ def handel_word(
         return cur_word + code[pointer], pointer + 1
 
 
-def tokenizer(raw_code: str, level: int = 0) -> str:
+def complier(raw_code: str, level: int = 0) -> str:
     new_code: str = ""
     cur_word = ""
     pointer = 0
     code_len = len(raw_code)
+    assigment = False
+    spaces = False
     while pointer < code_len:
         char = raw_code[pointer]
         match char:
@@ -250,12 +251,24 @@ def tokenizer(raw_code: str, level: int = 0) -> str:
                 cur_word += raw_code[pointer:n_pointer]
                 pointer = n_pointer
             case x if x in [" ", "\n"]:
+                # we have handled the word
+                # but still their is bunch of spaces
+                # then ignore those spaces
+                if spaces and cur_word == "":
+                    pointer += 1
+                    continue
+
+                if x == "\n":
+                    assigment = False
+                if x == " ":
+                    spaces = True
+
                 new_chunk, pointer = handel_word(
                     raw_code, cur_word, pointer, level + 1
                 )
                 new_code += new_chunk
                 cur_word = ""
-            case x if x in ["{"]:
+            case x if x in ["{"] and not assigment:
                 if cur_word in INDENT_ABLES:
                     new_chunk, pointer = handel_word(
                         raw_code, cur_word, pointer, level + 1
@@ -269,6 +282,9 @@ def tokenizer(raw_code: str, level: int = 0) -> str:
                     cur_word += new_chunk
             case _:
                 cur_word += char
+                spaces = False
+                if char == "=":
+                    assigment = True
                 pointer += 1
     return new_code + cur_word
 
@@ -284,7 +300,7 @@ def work_on_sampe(sample_index: int):
         print(f"Original FIle {file}..")
         print("Tokonized into... ")
         sample = "\n".join([i.strip() for i in sample.split("\n")])
-        python_code = tokenizer(sample)
+        python_code = complier(sample)
         python_code = replace_magic_words(python_code)
         with open("output.py", "w") as fp:
             fp.write(python_code)
@@ -301,9 +317,10 @@ def test_all(upto: int = 5):
 
 
 if __name__ == "__main__":
-    sample_index = 6
+    sample_index = 7
     if len(sys.argv) > 1 and sys.argv[1].isnumeric():
         sample_index = int(sys.argv[1])
+        work_on_sampe(sample_index)
     elif len(sys.argv) > 1 and sys.argv[1] == "test":
         test_all(sample_index)
     else:

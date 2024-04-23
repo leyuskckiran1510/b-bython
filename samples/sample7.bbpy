@@ -1,0 +1,15 @@
+def print_message(num_of_times) {
+    my_dict=              {"a":"b"}
+    for i in range(num_of_times) {
+        print("B-Bython is more-awesome!",my_dict);
+    }
+}
+
+def my_func(my_dict={"works":True}){
+    print(my_dict.get("works"))
+}
+
+if __name__ == "__main__" {
+    print_message(10);
+    my_func()
+}
