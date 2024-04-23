@@ -1,4 +1,10 @@
-x=6
+x=input()
+if not x.isnumeric(){
+    x=0
+}else{
+    x=int(x)
+}
+
 if x > 5 {
     print("value is bigger than 5")
 } else if x == 5 {

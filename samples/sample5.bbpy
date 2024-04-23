@@ -4,7 +4,6 @@
     {
         a = 20
         print(f"inner code block {a=}")
-    }
-    print("after inner code block")
+    }print("after inner code block")
     print(f"outer code block {a=}")
 }

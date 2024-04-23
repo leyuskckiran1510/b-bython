@@ -1,5 +1,6 @@
 import re
 import sys
+import traceback
 from uuid import uuid4
 
 from util import load_sample
@@ -130,7 +131,7 @@ def do_open_braces(code: str, pointer: int) -> tuple[str, int]:
     return line + ":\n", pointer - 1
 
 
-def remove_tailing_close_braces(inner_chunk: str) -> str:
+def clearn_inner_chunk(inner_chunk: str) -> str:
     code_len = len(inner_chunk)
     while code_len > 0:
         code_len -= 1
@@ -208,7 +209,14 @@ def do_inner_chunk(code: str, pointer: int, level: int = 0) -> tuple[str, int]:
             char = "\n"
         inner_chunk += char
         pointer += 1
-    inner_chunk = remove_tailing_close_braces(inner_chunk)
+
+    if not symbol_stack and pointer < len(code):
+        # consume tailing white spaces also
+        while pointer < len(code) and code[pointer] in WHITESPACES:
+            pointer += 1
+        print(pointer, code[pointer:].__repr__())
+
+    inner_chunk = clearn_inner_chunk(inner_chunk)
     inner_chunk = tokenizer(inner_chunk, level=level)
     inner_chunk = indent_it(inner_chunk, level)
     return inner_chunk, pointer
@@ -248,15 +256,20 @@ def tokenizer(raw_code: str, level: int = 0) -> str:
                 new_code += new_chunk
                 cur_word = ""
             case x if x in ["{"]:
-                new_chunk, pointer = handle_solo_code_block(
-                    raw_code, pointer, level + 1
-                )
-                cur_word += new_chunk
-                pointer += 1
+                if cur_word in INDENT_ABLES:
+                    new_chunk, pointer = handel_word(
+                        raw_code, cur_word, pointer, level + 1
+                    )
+                    new_code += new_chunk
+                    cur_word = ""
+                else:
+                    new_chunk, pointer = handle_solo_code_block(
+                        raw_code, pointer, level + 1
+                    )
+                    cur_word += new_chunk
             case _:
                 cur_word += char
                 pointer += 1
-        # print_code(new_code, level)
     return new_code + cur_word
 
 
@@ -266,23 +279,7 @@ def replace_magic_words(code: str):
     return code
 
 
-def test_all(upto: int = 5):
-    for i in range(1, upto + 1):
-        sample_index = i
-        for file, sample in load_sample(sample_index):
-            print(f"Original FIle {file}..")
-            print("Tokonized into... ")
-            sample = "\n".join([i.strip() for i in sample.split("\n")])
-            python_code = tokenizer(sample)
-            with open("output.py", "w") as fp:
-                fp.write(python_code)
-            exec(python_code)
-
-
-if __name__ == "__main__":
-    sample_index = 5
-    if len(sys.argv) > 1 and sys.argv[1].isnumeric():
-        sample_index = int(sys.argv[1])
+def work_on_sampe(sample_index: int):
     for file, sample in load_sample(sample_index):
         print(f"Original FIle {file}..")
         print("Tokonized into... ")
@@ -291,5 +288,23 @@ if __name__ == "__main__":
         python_code = replace_magic_words(python_code)
         with open("output.py", "w") as fp:
             fp.write(python_code)
-        exec(python_code)
-        # print(python_code)
+        try:
+            exec(python_code)
+        except BaseException as _:
+            traceback.print_exc()
+            print(f"[ERROR] in {file=}", "\n")
+
+
+def test_all(upto: int = 5):
+    for sample_index in range(1, upto + 1):
+        work_on_sampe(sample_index)
+
+
+if __name__ == "__main__":
+    sample_index = 6
+    if len(sys.argv) > 1 and sys.argv[1].isnumeric():
+        sample_index = int(sys.argv[1])
+    elif len(sys.argv) > 1 and sys.argv[1] == "test":
+        test_all(sample_index)
+    else:
+        work_on_sampe(sample_index)
